@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DeltaForge | Automated Quantitative Options Platform{% endblock %}</title>
+    <!-- HTMX Script -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <!-- Modern Tailwind-like minimal CDN or Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-dark text-slate-100 font-sans min-h-screen">
+    <!-- Top Navigation & Live Benchmark Bar -->
+    <header class="navbar border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="/" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 rounded bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center font-bold text-slate-950 text-lg shadow-lg shadow-emerald-500/20">
+                    Δ
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">DELTAFORGE</span>
+                    <span class="text-[10px] text-slate-400 tracking-widest uppercase -mt-1 font-mono">QUANT EXECUTION</span>
+                </div>
+            </a>
+            
+            <div class="h-6 w-px bg-slate-800 mx-2"></div>
+            
+            <!-- Index Selector Toggles -->
+            <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-semibold">
+                <a href="/?index=NIFTY" class="px-3 py-1.5 rounded-md transition-all {% if selected_index == 'NIFTY' %}bg-emerald-500 text-slate-950 shadow-md font-bold{% else %}text-slate-400 hover:text-white{% endif %}">
+                    NIFTY
+                </a>
+                <a href="/?index=BANKNIFTY" class="px-3 py-1.5 rounded-md transition-all {% if selected_index == 'BANKNIFTY' %}bg-emerald-500 text-slate-950 shadow-md font-bold{% else %}text-slate-400 hover:text-white{% endif %}">
+                    BANKNIFTY
+                </a>
+                <a href="/?index=SENSEX" class="px-3 py-1.5 rounded-md transition-all {% if selected_index == 'SENSEX' %}bg-emerald-500 text-slate-950 shadow-md font-bold{% else %}text-slate-400 hover:text-white{% endif %}">
+                    SENSEX
+                </a>
+                <a href="/?index=CRUDEOIL" class="px-3 py-1.5 rounded-md transition-all {% if selected_index == 'CRUDEOIL' %}bg-emerald-500 text-slate-950 shadow-md font-bold{% else %}text-slate-400 hover:text-white{% endif %}">
+                    CRUDE OIL
+                </a>
+            </div>
+        </div>
+
+        <!-- Live Spot Feed & Risk Clock -->
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-3 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs text-slate-400 font-mono">{{ selected_index }} SPOT:</span>
+                <span class="text-sm font-mono font-bold text-emerald-400">₹{{ spot_price }}</span>
+            </div>
+
+            <!-- Risk Exit Reminder -->
+            <div class="hidden md:flex items-center gap-2 text-xs bg-amber-500/10 text-amber-400 px-3 py-1.5 rounded-lg border border-amber-500/20 font-mono">
+                <span>⏱ 3:15 PM HARD EXIT ENFORCED</span>
+            </div>
+
+            <a href="/admin/" target="_blank" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                Django Admin Vault
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Body -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Modal Target for HTMX -->
+    <div id="modal-container"></div>
+
+    <footer class="mt-20 border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+        <p>DeltaForge Quant Engine &copy; 2026. Microservices: Django (8000) + FastAPI (8001). NISM/SEBI RA Alignment Framework.</p>
+    </footer>
+</body>
+</html>

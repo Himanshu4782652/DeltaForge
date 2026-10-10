@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Hero / Status Banner -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-3 bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs uppercase tracking-wider text-emerald-400 font-mono font-semibold">Active Benchmark Universe</span>
+                    <span class="text-xs text-slate-400 font-mono">Cycle: 
+                        {% if selected_index == 'NIFTY' %}Tuesday Weekly Expiry
+                        {% elif selected_index == 'BANKNIFTY' %}Thursday Weekly Expiry
+                        {% elif selected_index == 'SENSEX' %}Wednesday Weekly Expiry
+                        {% else %}Mid-Month Cycle{% endif %}
+                    </span>
+                </div>
+                <h1 class="text-2xl font-extrabold text-white tracking-tight">
+                    {{ selected_index }} Strategy Hub & Execution Router
+                </h1>
+                <p class="text-sm text-slate-400 mt-1 max-w-2xl">
+                    Select an options structure below to dynamically compute real-time ATM/ITM strike buckets via FastAPI and execute 1-click concurrent orders across all active family Demat accounts.
+                </p>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-800/80">
+                <div>
+                    <span class="text-xs text-slate-500 uppercase font-mono">Spot Rate</span>
+                    <div class="text-lg font-mono font-bold text-emerald-400">₹{{ spot_price }}</div>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-500 uppercase font-mono">ATM Strike</span>
+                    <div class="text-lg font-mono font-bold text-white">
+                        {% if selected_index == 'NIFTY' %}25,000
+                        {% elif selected_index == 'BANKNIFTY' %}51,200
+                        {% elif selected_index == 'SENSEX' %}81,500
+                        {% else %}6,400{% endif %}
+                    </div>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-500 uppercase font-mono">Connected Accounts</span>
+                    <div class="text-lg font-mono font-bold text-cyan-400">{{ accounts|length }} Active</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-Account Vault Widget -->
+        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">Broker Vault</h3>
+                    <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono font-semibold">AES-256</span>
+                </div>
+                <div class="space-y-2">
+                    {% for acc in accounts %}
+                    <div class="flex items-center justify-between text-xs p-2 bg-slate-950 rounded-lg border border-slate-800/60">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full {% if acc.is_active %}bg-emerald-400{% else %}bg-rose-500{% endif %}"></span>
+                            <span class="font-medium text-slate-200">{{ acc.account_alias|default:acc.client_id }}</span>
+                        </div>
+                        <span class="text-[11px] text-slate-500 uppercase font-mono">{{ acc.broker_name }}</span>
+                    </div>
+                    {% empty %}
+                    <div class="text-xs text-slate-500 py-3 text-center">
+                        No broker accounts linked.<br>
+                        <a href="/admin/broker_vault/brokeraccount/add/" target="_blank" class="text-emerald-400 hover:underline">Add in Admin Vault</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <a href="/admin/broker_vault/brokeraccount/" target="_blank" class="mt-4 text-center text-xs py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition font-medium">
+                Manage Multi-Demat Keys →
+            </a>
+        </div>
+    </div>
+
+    <!-- Strategy Catalog Grid (Sensibull-Style) -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+                <h2 class="text-lg font-bold text-white">Strategy Catalog</h2>
+                <p class="text-xs text-slate-400">Pre-configured quantitative options strategies with dynamic strike formulas</p>
+            </div>
+            <span class="text-xs text-slate-400 font-mono">Target: {{ selected_index }}</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for strat in strategies %}
+            <div class="bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition p-6 flex flex-col justify-between shadow-lg group">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-md font-semibold 
+                            {% if strat.category == 'neutral' %}bg-cyan-500/10 text-cyan-400 border border-cyan-500/20
+                            {% elif strat.category == 'bullish' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                            {% else %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% endif %}">
+                            {{ strat.get_category_display }}
+                        </span>
+                        <span class="text-xs font-mono text-slate-400">Auto: {{ strat.square_off_time|time:"H:i" }}</span>
+                    </div>
+
+                    <h3 class="text-base font-bold text-white group-hover:text-emerald-400 transition">{{ strat.name }}</h3>
+                    <p class="text-xs text-slate-400 mt-2 line-clamp-2">
+                        {{ strat.description|default:"Harvests time decay with defined risk parameters. Auto-calculates ATM/ITM legs upon opening." }}
+                    </p>
+
+                    <!-- Leg Formula Preview -->
+                    <div class="mt-4 space-y-1.5 bg-slate-950 p-3 rounded-lg border border-slate-800/80 font-mono text-[11px]">
+                        {% for leg in strat.legs_formula %}
+                        <div class="flex items-center justify-between">
+                            <span class="{% if leg.action == 'SELL' %}text-rose-400{% else %}text-emerald-400{% endif %} font-bold">
+                                {{ leg.action }}
+                            </span>
+                            <span class="text-slate-300">{{ leg.offset }} {{ leg.type }}</span>
+                            <span class="text-slate-500">{{ leg.lots }} Lot</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-mono">1-Click Dispatch</span>
+                    <button 
+                        hx-get="/strategy/{{ strat.id }}/legs/?spot={{ spot_price }}"
+                        hx-target="#modal-container"
+                        class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg transition shadow-md shadow-emerald-500/10 flex items-center gap-1.5">
+                        <span>Configure & Trade</span>
+                        <span>→</span>
+                    </button>
+                </div>
+            </div>
+            {% empty %}
+            <!-- Demo Strategy Cards if DB has no records yet -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-md font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            Market Neutral
+                        </span>
+                        <span class="text-xs font-mono text-slate-400">Exit: 15:15</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white">Intraday Delta-Neutral Straddle</h3>
+                    <p class="text-xs text-slate-400 mt-2">
+                        Sells ATM Call and ATM Put simultaneously to capture accelerated intraday Theta decay.
+                    </p>
+                    <div class="mt-4 space-y-1.5 bg-slate-950 p-3 rounded-lg border border-slate-800/80 font-mono text-[11px]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-rose-400 font-bold">SELL</span>
+                            <span class="text-slate-300">ATM CE</span>
+                            <span class="text-slate-500">1 Lot</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-rose-400 font-bold">SELL</span>
+                            <span class="text-slate-300">ATM PE</span>
+                            <span class="text-slate-500">1 Lot</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                    <span class="text-xs text-slate-500">Demo Template</span>
+                    <a href="/admin/strategy_manager/strategyconfig/add/" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition">
+                        Add to DB in Admin
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- External Analytics & Redirection Hub (NSE & Chartink) -->
+    <div class="bg-slate-900/60 rounded-2xl border border-slate-800 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">External Screening & Analytics Portal</h3>
+                <p class="text-xs text-slate-400">Direct parameter deep-links to official NSE tables and pre-filtered Chartink technical scanners</p>
+            </div>
+            <span class="text-[10px] bg-slate-800 text-slate-400 px-2.5 py-1 rounded font-mono">Zero-Auth Direct Paths</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="https://www.nseindia.com/option-chain" target="_blank" class="p-4 bg-slate-950 hover:bg-slate-900 rounded-xl border border-slate-800 transition flex items-center justify-between group">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-200 group-hover:text-emerald-400">NSE Option Chain (Live)</h4>
+                    <p class="text-[11px] text-slate-500 mt-1">Official Open Interest (OI) & PCR metrics</p>
+                </div>
+                <span class="text-slate-500 group-hover:text-emerald-400 text-sm">↗</span>
+            </a>
+
+            <a href="https://chartink.com/screener/15-min-breakout-stocks" target="_blank" class="p-4 bg-slate-950 hover:bg-slate-900 rounded-xl border border-slate-800 transition flex items-center justify-between group">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-200 group-hover:text-cyan-400">Chartink Intraday Breakout</h4>
+                    <p class="text-[11px] text-slate-500 mt-1">High-probability momentum scanners</p>
+                </div>
+                <span class="text-slate-500 group-hover:text-cyan-400 text-sm">↗</span>
+            </a>
+
+            <a href="https://chartink.com/screener/nifty-50-volume-shockers" target="_blank" class="p-4 bg-slate-950 hover:bg-slate-900 rounded-xl border border-slate-800 transition flex items-center justify-between group">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-200 group-hover:text-amber-400">Volume Surge Screener</h4>
+                    <p class="text-[11px] text-slate-500 mt-1">Volume bursts & institutional order flow</p>
+                </div>
+                <span class="text-slate-500 group-hover:text-amber-400 text-sm">↗</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+<div class="p-4 rounded-xl border {% if response.status == 'COMPLETED' or response.status == 'SUCCESS' %}bg-emerald-500/10 border-emerald-500/30 text-emerald-300{% else %}bg-amber-500/10 border-amber-500/30 text-amber-300{% endif %} font-mono text-xs space-y-2 animate-fade-in">
+    <div class="flex items-center justify-between font-bold">
+        <span class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full {% if response.status == 'COMPLETED' or response.status == 'SUCCESS' %}bg-emerald-400{% else %}bg-amber-400{% endif %}"></span>
+            DISPATCH {{ response.status }}
+        </span>
+        <span class="text-[11px] text-slate-400">Latency: {{ response.execution_time_ms|default:42 }}ms</span>
+    </div>
+    
+    <p class="text-[11px] text-slate-300">
+        Dispatched parallel orders across {{ accounts_count }} accounts for strategy: <strong class="text-white">{{ strategy.name }}</strong>.
+    </p>
+
+    {% if response.error %}
+    <div class="text-[10px] text-amber-400 bg-slate-950 p-2 rounded border border-amber-500/20">
+        {{ response.error }}
+    </div>
+    {% endif %}
+
+    <div class="text-[10px] text-slate-400 pt-1 border-t border-slate-800">
+        Audit logs stored in PostgreSQL database. View in <a href="/admin/strategy_manager/tradeexecutionlog/" target="_blank" class="underline text-emerald-400">Django Admin</a>.
+    </div>
+</div>
